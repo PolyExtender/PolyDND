@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PolyDND - Fantasy Adventure</title>
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome for icons -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&family=Cinzel:wght@400;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+
+  <!-- Custom styles -->
+  <style>
+    :root {
+      --primary-color: #3c2a21;
+      --secondary-color: #864313;
+      --accent-color: #ff9d00;
+      --text-color: #e6ccb2;
+      --dark-bg: #1a1a1a;
+      --panel-bg: #2c2117;
+      --border-color: #644e35;
+    }
+    
+    body {
+      font-family: 'Lato', sans-serif;
+      background: var(--dark-bg) url('/api/placeholder/1200/800') no-repeat center center fixed;
+      background-size: cover;
+      color: var(--text-color);
+      position: relative;
+      min-height: 100vh;
+    }
+    
+    body::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      z-index: -1;
+    }
+    
+    h1, h2, h3 {
+      font-family: 'Cinzel', serif;
+      color: var(--accent-color);
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    }
+    
+    .navbar {
+      background-color: var(--primary-color) !important;
+      border-bottom: 2px solid var(--accent-color);
+    }
+    
+    .navbar-brand {
+      font-family: 'MedievalSharp', cursive;
+      font-size: 1.8rem;
+      color: var(--accent-color) !important;
+    }
+    
+    .nav-link {
+      color: var(--text-color) !important;
+      font-weight: bold;
+      transition: color 0.3s;
+    }
+    
+    .nav-link:hover, .nav-link.active {
+      color: var(--accent-color) !important;
+    }
+    
+    .game-container {
+      background-color: var(--panel-bg);
+      border: 2px solid var(--border-color);
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+      margin-bottom: 20px;
+    }
+    
+    .room-description {
+      font-size: 1.1rem;
+      line-height: 1.6;
+      min-height: 100px;
+      border-left: 4px solid var(--accent-color);
+      padding-left: 15px;
+      margin-bottom: 20px;
+    }
+    
+    .action-btn {
+      background-color: var(--secondary-color);
+      border: 1px solid var(--accent-color);
+      color: var(--text-color);
+      margin: 5px;
+      transition: all 0.3s;
+    }
+    
+    .action-btn:hover {
+      background-color: var(--accent-color);
+      color: var(--dark-bg);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+    
+    .status-panel {
+      background-color: var(--panel-bg);
+      border: 2px solid var(--border-color);
+      border-radius: 10px;
+      padding: 15px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+    }
+    
+    .progress {
+      height: 25px;
+      background-color: #444;
+      border-radius: 13px;
+      margin-bottom: 15px;
+      overflow: hidden;
+    }
+    
+    .progress-bar {
+      position: relative;
+      transition: width 0.5s ease;
+    }
+    
+    .status-title {
+      border-bottom: 2px solid var(--accent-color);
+      padding-bottom: 8px;
+      margin-bottom: 12px;
+      font-size: 1.3rem;
+    }
+    
+    .inventory-item, .quest-item {
+      background-color: rgba(60, 42, 33, 0.6);
+      border: 1px solid var(--border-color);
+      border-radius: 5px;
+      margin: 5px 0;
+      padding: 8px;
+      transition: all 0.3s;
+    }
+    
+    .inventory-item:hover, .quest-item:hover {
+      background-color: rgba(134, 67, 19, 0.6);
+    }
+    
+    .quest-button {
+      background-color: var(--secondary-color);
+      border: 1px solid var(--accent-color);
+      margin-top: 10px;
+    }
+    
+    .quest-button:hover:not([disabled]) {
+      background-color: var(--accent-color);
+      color: var(--dark-bg);
+    }
+    
+    .quest-button[disabled] {
+      opacity: 0.5;
+    }
+    
+    .footer {
+      background-color: var(--primary-color);
+      border-top: 2px solid var(--accent-color);
+      padding: 10px 0;
+      margin-top: 20px;
+      text-align: center;
+      color: var(--text-color);
+    }
+    
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    .fade-in {
+      animation: fadeIn 1s ease-in;
+    }
+    
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+    
+    .pulse {
+      animation: pulse 2s infinite;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+      <div class="container">
+        <a class="navbar-brand" href="#">
+          <i class="fas fa-dice-d20 me-2"></i>PolyDND
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="https://polyextender.github.io/">Home</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="https://polyextender.github.io/PolyStreamLookup/">StreamLookup</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link active" href="https://polyextender.github.io/PolyCosmetic/">PolyCosmetic</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <div class="container mt-4">
+    <div class="row mb-4 fade-in">
+      <div class="col-12 text-center">
+        <h1 class="display-4"><i class="fas fa-dragon me-3"></i>PolyDND<i class="fas fa-sword ms-3"></i></h1>
+        <p class="lead">Embark on a fantasy adventure in the Poly realm!</p>
+      </div>
+    </div>
+    
+    <div class="row">
+      <!-- Game Section -->
+      <div class="col-lg-8 mb-4">
+        <div class="game-container fade-in">
+          <h2 class="mb-3"><i class="fas fa-dungeon me-2"></i>Adventure</h2>
+          <div id="room-description" class="room-description p-3">
+            You find yourself in a dimly lit dungeon. The stone walls are covered with ancient moss and the air is thick with mystery. Choose your path wisely, brave adventurer...
+          </div>
+          <div class="d-flex flex-wrap justify-content-center">
+            <button class="btn action-btn btn-lg" onclick="exploreRoom('left')">
+              <i class="fas fa-chevron-left me-2"></i>Go Left
+            </button>
+            <button class="btn action-btn btn-lg" onclick="exploreRoom('forward')">
+              <i class="fas fa-chevron-up me-2"></i>Go Forward
+            </button>
+            <button class="btn action-btn btn-lg" onclick="exploreRoom('right')">
+              <i class="fas fa-chevron-right me-2"></i>Go Right
+            </button>
+          </div>
+        </div>
+        
+        <div id="event-log" class="game-container fade-in">
+          <h2 class="mb-3"><i class="fas fa-book-open me-2"></i>Adventure Log</h2>
+          <div id="log-entries" class="p-2" style="max-height: 150px; overflow-y: auto;">
+            <p><small>Your adventure begins now...</small></p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Status Section -->
+      <div class="col-lg-4">
+        <div class="status-panel fade-in mb-4">
+          <h2 class="status-title"><i class="fas fa-user-shield me-2"></i>Character</h2>
+          
+          <h5><i class="fas fa-heart me-2 text-danger"></i>Health</h5>
+          <div class="progress mb-3">
+            <div id="health-progress" class="progress-bar bg-danger" role="progressbar" style="width: 100%;">100%</div>
+          </div>
+          
+          <h5><i class="fas fa-backpack me-2"></i>Inventory</h5>
+          <div id="player-inventory" class="mb-3">
+            <div class="inventory-item">Empty inventory</div>
+          </div>
+        </div>
+        
+        <div class="status-panel fade-in">
+          <h2 class="status-title"><i class="fas fa-scroll me-2"></i>Quests</h2>
+          <div id="player-quests" class="mb-3">
+            <div class="quest-item">No active quests</div>
+          </div>
+          
+          <div id="quest-actions" style="display: none;">
+            <h5><i class="fas fa-tasks me-2"></i>Quest Actions</h5>
+            <button class="btn quest-button w-100 mb-2" data-quest-id="Find the Lost PolySword" disabled>
+              <i class="fas fa-check-circle me-2"></i>Complete "Find the Lost PolySword"
+            </button>
+            <button class="btn quest-button w-100 mb-2" data-quest-id="Rescue the Poly Villagers" disabled>
+              <i class="fas fa-check-circle me-2"></i>Complete "Rescue the Poly Villagers"
+            </button>
+            <button class="btn quest-button w-100 mb-2" data-quest-id="Defeat the PolyDragon" disabled>
+              <i class="fas fa-check-circle me-2"></i>Complete "Defeat the PolyDragon"
+            </button>
+            <button class="btn quest-button w-100" data-quest-id="Retrieve the Poly Artifact" disabled>
+              <i class="fas fa-check-circle me-2"></i>Complete "Retrieve the Poly Artifact"
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <footer class="footer mt-5">
+    <div class="container">
+      <div class="row">
+        <div class="col-12">
+          <p><i class="fas fa-copyright me-2"></i>PolyExtender | Your Fantasy Adventure Awaits</p>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Bootstrap JS and Popper.js -->
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.min.js"></script>
+
+  <!-- Game script -->
+  <script>
+    // Game state
+    let player = {
+      health: 100,
+      inventory: [],
+      quests: []
+    };
+    
+    let gameLog = [];
+    
+    function exploreRoom(direction) {
+      // Add adventure log entry about direction
+      addToLog(`You decided to go ${direction}.`);
+      
+      // Randomly generate a room event
+      const event = getRandomEvent();
+      let roomDescription = "";
+      
+      switch (event.type) {
+        case 'monster':
+          roomDescription = `<span class="text-danger"><i class="fas fa-skull me-2"></i>Oh no! You encountered a ${event.name}!</span>`;
+          
+          // Player fights the monster
+          const damageTaken = Math.floor(Math.random() * 20) + 2;
+          player.health = Math.max(0, player.health - damageTaken);
+          
+          roomDescription += `<p>The ${event.name} attacks you fiercely. You defend yourself but take ${damageTaken} damage.</p>`;
+          addToLog(`Battle: You fought a ${event.name} and took ${damageTaken} damage.`);
+          
+          if (player.health <= 0) {
+            roomDescription += `<p class="text-danger fw-bold">You have been defeated! Refresh the page to start a new adventure.</p>`;
+            disableButtons();
+          }
+          break;
+          
+        case 'treasure':
+          roomDescription = `<span class="text-warning"><i class="fas fa-treasure-chest me-2"></i>You found a treasure chest!</span>`;
+          
+          // Player gains loot
+          const loot = getRandomLoot();
+          player.inventory.push(loot);
+          
+          roomDescription += `<p>You carefully open the chest and find ${loot} inside!</p>`;
+          addToLog(`Discovery: Found ${loot} in a treasure chest.`);
+          break;
+          
+        case 'health':
+          roomDescription = `<span class="text-success"><i class="fas fa-hand-holding-medical me-2"></i>You found a healing spring!</span>`;
+          
+          // Player recovers health
+          const healingAmount = Math.floor(Math.random() * 20) + 10;
+          const oldHealth = player.health;
+          player.health = Math.min(100, player.health + healingAmount);
+          
+          roomDescription += `<p>The magical waters restore your vitality. You heal for ${healingAmount} points.</p>`;
+          addToLog(`Healing: Restored ${player.health - oldHealth} health at a magical spring.`);
+          break;
+          
+        case 'quest':
+          roomDescription = `<span class="text-info"><i class="fas fa-scroll me-2"></i>You stumbled upon a quest!</span>`;
+          
+          // Player receives a quest
+          const quest = getRandomQuest();
+          player.quests.push(quest);
+          
+          roomDescription += `<p>A mysterious figure approaches you with a task: "${quest.description}". Complete this to earn ${quest.reward}.</p>`;
+          addToLog(`Quest: Received new quest "${quest.description}".`);
+          
+          // Show quest actions when a quest is added
+          document.getElementById('quest-actions').style.display = 'block';
+          break;
+          
+        case 'empty':
+        default:
+          const emptyRooms = [
+            "You enter a quiet chamber. Dust floats in beams of light streaming from cracks in the ceiling.",
+            "This room appears empty, though ancient runes are carved into the floor.",
+            "A vacant room greets you. The only sound is the echo of your footsteps.",
+            "You find yourself in a barren corridor. The air feels slightly cooler here.",
+            "An empty chamber with cobwebs in the corners. Nothing of interest catches your eye."
+          ];
+          
+          roomDescription = `<i class="fas fa-door-open me-2"></i>${emptyRooms[Math.floor(Math.random() * emptyRooms.length)]}`;
+          addToLog("Exploration: Found an empty room.");
+          break;
+      }
+      
+      // Update room description with fancy animation
+      const roomDescElem = document.getElementById('room-description');
+      roomDescElem.classList.remove('fade-in');
+      void roomDescElem.offsetWidth; // Trigger reflow
+      roomDescElem.classList.add('fade-in');
+      roomDescElem.innerHTML = roomDescription;
+      
+      // Update player status
+      updatePlayerStatus();
+      updateButtons();
+    }
+    
+    function addToLog(message) {
+      const logEntries = document.getElementById('log-entries');
+      const timestamp = new Date().toLocaleTimeString();
+      const entry = document.createElement('p');
+      entry.innerHTML = `<small><span class="text-muted">[${timestamp}]</span> ${message}</small>`;
+      
+      // Add new log entry at the top
+      logEntries.insertBefore(entry, logEntries.firstChild);
+      
+      // Keep track of game log
+      gameLog.unshift({ time: timestamp, message: message });
+      
+      // Only keep the most recent 20 log entries
+      if (gameLog.length > 20) {
+        gameLog.pop();
+      }
+      
+      // Save game state
+      saveGame();
+    }
+    
+    function getRandomEvent() {
+      const events = [
+        { type: 'empty', weight: 3 },
+        { type: 'monster', name: 'Goblin', weight: 2 },
+        { type: 'monster', name: 'Skeleton', weight: 2 },
+        { type: 'monster', name: 'Shadow Beast', weight: 1 },
+        { type: 'monster', name: 'Dungeon Troll', weight: 1 },
+        { type: 'treasure', weight: 2 },
+        { type: 'health', weight: 2 },
+        { type: 'quest', weight: 1 }
+      ];
+      
+      // Create weighted list
+      let weightedList = [];
+      for (const event of events) {
+        for (let i = 0; i < event.weight; i++) {
+          weightedList.push(event);
+        }
+      }
+      
+      return weightedList[Math.floor(Math.random() * weightedList.length)];
+    }
+    
+    function getRandomLoot() {
+      const lootItems = [
+        'Gold Coins', 
+        'Health Potion', 
+        'Magic Scroll', 
+        'Silver Key', 
+        'Ancient Amulet', 
+        'Enchanted Dagger', 
+        'Mysterious Gem'
+      ];
+      return lootItems[Math.floor(Math.random() * lootItems.length)];
+    }
+    
+    function getRandomQuest() {
+      const questDescriptions = [
+        'Find the Lost PolySword', 
+        'Rescue the Poly Villagers', 
+        'Defeat the PolyDragon', 
+        'Retrieve the Poly Artifact'
+      ];
+      
+      const questRewards = [
+        'Experience Points', 
+        'Rare Item', 
+        'Gold Coins', 
+        'Ancient Knowledge'
+      ];
+      
+      const randomDescription = questDescriptions[Math.floor(Math.random() * questDescriptions.length)];
+      const randomReward = questRewards[Math.floor(Math.random() * questRewards.length)];
+      
+      return {
+        description: randomDescription,
+        reward: randomReward
+      };
+    }
+    
+    function updatePlayerStatus() {
+      // Update health progress bar with animation
+      const healthProgress = document.getElementById('health-progress');
+      healthProgress.style.width = `${player.health}%`;
+      healthProgress.innerText = `${player.health}%`;
+      
+      // Change health bar color based on health level
+      if (player.health > 70) {
+        healthProgress.className = 'progress-bar bg-success';
+      } else if (player.health > 30) {
+        healthProgress.className = 'progress-bar bg-warning';
+      } else {
+        healthProgress.className = 'progress-bar bg-danger';
+      }
+      
+      // Update inventory
+      const inventoryContainer = document.getElementById('player-inventory');
+      if (player.inventory.length > 0) {
+        inventoryContainer.innerHTML = '';
+        player.inventory.forEach(item => {
+          let itemIcon = 'box';
+          
+          if (item.includes('Potion')) itemIcon = 'flask';
+          else if (item.includes('Scroll')) itemIcon = 'scroll';
+          else if (item.includes('Key')) itemIcon = 'key';
+          else if (item.includes('Coin')) itemIcon = 'coins';
+          else if (item.includes('Gem')) itemIcon = 'gem';
+          else if (item.includes('Amulet')) itemIcon = 'ring';
+          else if (item.includes('Dagger')) itemIcon = 'sword';
+          
+          const itemElement = document.createElement('div');
+          itemElement.className = 'inventory-item';
+          itemElement.innerHTML = `<i class="fas fa-${itemIcon} me-2"></i>${item}`;
+          inventoryContainer.appendChild(itemElement);
+        });
+      } else {
+        inventoryContainer.innerHTML = '<div class="inventory-item">Empty inventory</div>';
+      }
+      
+      // Update quests
+      const questsContainer = document.getElementById('player-quests');
+      if (player.quests.length > 0) {
+        questsContainer.innerHTML = '';
+        player.quests.forEach(quest => {
+          const questElement = document.createElement('div');
+          questElement.className = 'quest-item';
+          questElement.innerHTML = `<i class="fas fa-tasks me-2"></i>${quest.description}<br><small class="text-muted">Reward: ${quest.reward}</small>`;
+          questsContainer.appendChild(questElement);
+        });
+      } else {
+        questsContainer.innerHTML = '<div class="quest-item">No active quests</div>';
+      }
+      
+      // Show/hide quest actions panel
+      document.getElementById('quest-actions').style.display = player.quests.length > 0 ? 'block' : 'none';
+      
+      // Save game state
+      saveGame();
+    }
+    
+    function updateButtons() {
+      // Enable or disable quest buttons based on quests
+      const questButtons = document.querySelectorAll('.quest-button');
+      
+      questButtons.forEach(button => {
+        const questId = button.getAttribute('data-quest-id');
+        const quest = player.quests.find(q => q.description === questId);
+        
+        if (quest) {
+          button.disabled = false;
+          // Remove previous event listeners to avoid duplicates
+          button.replaceWith(button.cloneNode(true));
+          // Add new event listener
+          document.querySelector(`.quest-button[data-quest-id="${questId}"]`).addEventListener('click', () => completeQuest(quest));
+        } else {
+          button.disabled = true;
+        }
+      });
+    }
+    
+    function completeQuest(quest) {
+      // Implement quest completion logic
+      const questIndex = player.quests.findIndex(q => q.description === quest.description);
+      if (questIndex !== -1) {
+        // Remove the quest
+        player.quests.splice(questIndex, 1);
+        
+        // Add reward to inventory
+        if (quest.reward === 'Gold Coins') {
+          player.inventory.push('Bag of Gold Coins');
+        } else if (quest.reward === 'Rare Item') {
+          const rareItems = ['Legendary Weapon', 'Mystical Artifact', 'Enchanted Armor'];
+          player.inventory.push(rareItems[Math.floor(Math.random() * rareItems.length)]);
+        } else if (quest.reward === 'Ancient Knowledge') {
+          player.inventory.push('Ancient Tome');
+        }
+        
+        // Add to log
+        addToLog(`Quest Complete: "${quest.description}" - Received ${quest.reward}.`);
+        
+        // Give bonus health
+        const healthBonus = Math.floor(Math.random() * 15) + 5;
+        player.health = Math.min(100, player.health + healthBonus);
+        
+        // Update UI
+        updatePlayerStatus();
+        updateButtons();
+        
+        // Show success message
+        const roomDescElem = document.getElementById('room-description');
+        roomDescElem.innerHTML = `
+          <span class="text-success"><i class="fas fa-trophy me-2"></i>Quest Complete!</span>
+          <p>You have successfully completed the quest: "${quest.description}"</p>
+          <p>You received ${quest.reward} and ${healthBonus} bonus health points!</p>
+        `;
+      }
+    }
+    
+    function disableButtons() {
+      const buttons = document.querySelectorAll('.action-btn, .quest-button');
+      buttons.forEach(button => {
+        button.disabled = true;
+      });
+    }
+    
+    function saveGame() {
+      const gameProgress = {
+        player: player,
+        log: gameLog
+      };
+      localStorage.setItem('gameProgress', JSON.stringify(gameProgress));
+    }
+    
+    function loadGame() {
+      const savedProgress = localStorage.getItem('gameProgress');
+      if (savedProgress) {
+        const { player: savedPlayer, log: savedLog } = JSON.parse(savedProgress);
+        player = savedPlayer;
+        gameLog = savedLog || [];
+        
+        // Update UI
+        updatePlayerStatus();
+        updateButtons();
+        
+        // Update log
+        const logEntries = document.getElementById('log-entries');
+        logEntries.innerHTML = '';
+        gameLog.forEach(entry => {
+          const logEntry = document.createElement('p');
+          logEntry.innerHTML = `<small><span class="text-muted">[${entry.time}]</span> ${entry.message}</small>`;
+          logEntries.appendChild(logEntry);
+        });
+        
+        // Show welcome back message
+        document.getElementById('room-description').innerHTML = `
+          <i class="fas fa-history me-2"></i>Welcome back to your adventure! Your progress has been loaded.
+          <p>Continue your quest by choosing a direction to explore.</p>
+        `;
+      }
+    }
+    
+    // Load saved game progress on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      loadGame();
+    });
+  </script>
+</body>
+</html>
